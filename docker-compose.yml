@@ -1,0 +1,57 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: school-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: school_db
+      MYSQL_USER: school_user
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - school_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: school-app
+    working_dir: /var/www
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./:/var/www
+    depends_on:
+      - mysql
+    networks:
+      - school_network
+    command: php artisan serve --host=0.0.0.0 --port=8000
+
+  composer:
+    image: composer:2
+    container_name: school-composer
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    networks:
+      - school_network
+
+  node:
+    image: node:20
+    container_name: school-node
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    networks:
+      - school_network
+
+volumes:
+  mysql_data:
+
+networks:
+  school_network:
+    driver: bridge
